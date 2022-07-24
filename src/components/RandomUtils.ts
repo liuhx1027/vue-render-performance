@@ -81,5 +81,6 @@ export {
     getRandomCoordinates,
     getLinearCoordinates,
     getStackedCoordinates,
+    getRandomNumberBetween,
     colors
 }

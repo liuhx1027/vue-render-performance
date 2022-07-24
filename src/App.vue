@@ -31,7 +31,8 @@ watch([inputValue], () => {
         <label for="optionDebounced"> Debounced </label>
       </span>
       <span>
-        <input type="radio" id="optionAsynchronous" value="asynchronous" name="renderOption" v-model="optionValue" />
+        <input disabled type="radio" id="optionAsynchronous" value="asynchronous" name="renderOption"
+          v-model="optionValue" />
         <label for="optionAsynchronous"> Asynchronous </label>
       </span>
     </div>
@@ -44,7 +45,7 @@ watch([inputValue], () => {
       <span>{{ optionValue === 'debounced' ? debouncedInputValue : inputValue }}</span> =>
       <span>{{ optionValue }}</span>
     </div>
-    <div className=" flex flex-wrap">
+    <div className="container flex flex-wrap">
       <PlotChat className="basis-1/2 overflow-hidden"
         :input="optionValue === 'debounced' ? debouncedInputValue : inputValue" />
       <LineChat className="basis-1/2 overflow-hidden"
@@ -54,6 +55,8 @@ watch([inputValue], () => {
     </div>
   </div>
 </template>
-
-<style scoped>
+<style>
+div.container {
+  background-color: rgb(34, 34, 34);
+}
 </style>

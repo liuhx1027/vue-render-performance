@@ -1,85 +1,94 @@
 <script setup lang="ts">
-import * as d3 from "d3"
-import { onMounted, watchEffect, watch, toRefs } from "vue";
-import { getLinearCoordinates, getRandomColor } from "./RandomUtils"
+import { toRefs, computed } from "vue";
+import { getRandomColor, getRandomNumberBetween } from "./RandomUtils"
 
 const props = defineProps<{
     input: string
 }>();
 
-// init(input ?? "");
-
-onMounted(() => {
-    init(props.input ?? "");
-})
 const propsRef = toRefs(props);
-const id = "lineChat"
 
-watch([propsRef.input], () => {
-    console.log("new props.input", propsRef.input.value)
-    init(propsRef.input.value ?? "");
-})
+const verticalLines = [
+    { text: "5", x: 112.5 },
+    { text: "10", x: 175 },
+    { text: "15", x: 237.5 },
+    { text: "20", x: 300 },
+];
+const horizontalLines = [
+    { text: "50", y: 296 },
+    { text: "100", y: 236 },
+    { text: "150", y: 175 },
+    { text: "200", y: 115 },
+    { text: "250", y: 54 },
+];
 
-function init(data: string) {
-    d3.select(`#${id}`).select("svg").remove();
-
-    const screenWidth = Math.min(document.documentElement.clientWidth, window.innerWidth || 0)
-    const width = screenWidth > 900 ? Math.ceil(screenWidth / 2) - 10 : screenWidth;
-    const height = 350;
-
-    const margin = {
-        top: 20,
-        bottom: 20,
-        left: 20,
-        right: 20
-    }
-
-    const xThreshold = 250 + ((data.length % 5) * 5);
-    const yThreshold = 250 + ((data.length % 10) * 10);
-
-    let dataPoints = getLinearCoordinates(xThreshold, yThreshold);
-
-
-    const xScale = d3.scaleLinear()
-        .domain([0, xThreshold])
-        .range([margin.left + margin.right, width - margin.left - margin.right]);
-    const yScale = d3.scaleLinear()
-        .domain([0, yThreshold])
-        .range([height - margin.top - margin.bottom, margin.top]);
-
-    const xAxis = d3.axisBottom(xScale);
-    const yAxis = d3.axisLeft(yScale);
-
-    const line = d3.line()
-        .x(d => xScale(d[0]))
-        .y(d => yScale(d[1]))
-
-    let lineChartSVG = d3.select(`#${id}`)
-        .append("svg")
-        .attr("width", width)
-        .attr("height", height);
-
-    lineChartSVG.selectAll("g")
-        .data(dataPoints)
-        .enter()
-        .append("g:path")
-        .attr("d", (d, index) => line([[index + 1, 0], d]))
-        .attr("stroke", () => getRandomColor())
-        .attr("stroke-width", 1)
-        .attr("fill", "none");
-
-    lineChartSVG.append("g")
-        .attr("transform", `translate(0, ${height - margin.top - margin.bottom})`)
-        .attr("class", "axis")
-        .call(xAxis);
-    lineChartSVG.append("g")
-        .attr("transform", `translate(${margin.left + margin.right} , 0)`)
-        .attr("class", "axis")
-        .call(yAxis);
-}
+const bars = computed(() => {
+    const NUMBER_OF_BAR = (propsRef.input.value.length + 1) * 20;
+    const BAR_AREA_WIDTH = 300 / NUMBER_OF_BAR;
+    const GAP = BAR_AREA_WIDTH * 0.2;
+    const BAR_WIDTH = BAR_AREA_WIDTH - GAP;
+    return new Array(NUMBER_OF_BAR).fill(0).map((_, idx) => {
+        const height = getRandomNumberBetween(0, 300);
+        return {
+            x: 50 + idx * BAR_AREA_WIDTH,
+            y: 350 - height,
+            width: BAR_WIDTH,
+            height: height
+        }
+    })
+}) 
 </script>
 <template>
     <div>
-        <div id="lineChat"></div>
+        <div id="lineChat">
+            <svg width="400" height="400" role="img"
+                aria-labelledby="victory-container-1-title victory-container-1-desc" viewBox="0 0 400 400"
+                style="pointer-events: all; width: 100%; height: 100%;">
+                <g role="presentation">
+                    <line x1="50" x2="350" y1="350" y2="350" role="presentation" shape-rendering="auto"
+                        vector-effect="non-scaling-stroke"
+                        style="stroke: white; fill: transparent; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;">
+                    </line>
+                    <g role="presentation" v-for="line in verticalLines">
+                        <line :x1="line.x" :x2="line.x" y1="350" y2="50" role="presentation" shape-rendering="auto"
+                            vector-effect="non-scaling-stroke"
+                            style="stroke: rgb(236, 239, 241); fill: none; stroke-dasharray: 10, 5; stroke-linecap: round; stroke-linejoin: round; pointer-events: painted;">
+                        </line>
+                        <line :x1="line.x" :x2="line.x" y1="350" y2="355" role="presentation" shape-rendering="auto"
+                            vector-effect="non-scaling-stroke"
+                            style="stroke: rgb(144, 164, 174); fill: transparent; size: 5px; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round;">
+                        </line><text :x="line.x" dx="0" y="363" dy="10.26">
+                            <tspan :x="line.x" dx="0" text-anchor="middle"
+                                style="fill: white; font-size: 12px; font-family: Roboto, &quot;Helvetica Neue&quot;, Helvetica, sans-serif; stroke: transparent; letter-spacing: normal; padding: 8px; stroke-width: 0;">
+                                {{ line.text }}</tspan>
+                        </text>
+                    </g>
+                </g>
+                <g role="presentation">
+                    <line x1="50" x2="50" y1="50" y2="350" role="presentation" shape-rendering="auto"
+                        vector-effect="non-scaling-stroke"
+                        style="stroke: white; fill: transparent; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;">
+                    </line>
+                    <g role="presentation" v-for="line in horizontalLines">
+                        <line x1="50" x2="350" :y1="line.y" :y2="line.y" role="presentation" shape-rendering="auto"
+                            vector-effect="non-scaling-stroke"
+                            style="stroke: rgb(236, 239, 241); fill: none; stroke-dasharray: 10, 5; stroke-linecap: round; stroke-linejoin: round; pointer-events: painted;">
+                        </line>
+                        <line x1="50" x2="45" :y1="line.y" :y2="line.y" role="presentation" shape-rendering="auto"
+                            vector-effect="non-scaling-stroke"
+                            style="stroke: rgb(144, 164, 174); fill: transparent; size: 5px; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round;">
+                        </line><text x="37" dx="0" :y="line.y" dy="4.26">
+                            <tspan x="37" dx="0" text-anchor="end"
+                                style="fill: white; font-size: 12px; font-family: Roboto, &quot;Helvetica Neue&quot;, Helvetica, sans-serif; stroke: transparent; letter-spacing: normal; padding: 8px; stroke-width: 0;">
+                                {{ line.text }}</tspan>
+                        </text>
+                    </g>
+                </g>
+                <g>
+                    <rect v-for="(bar, index) in bars" :key="index" :x="bar.x" :y="bar.y" :width="bar.width"
+                        :height="bar.height" :fill="getRandomColor()"></rect>
+                </g>
+            </svg>
+        </div>
     </div>
 </template>

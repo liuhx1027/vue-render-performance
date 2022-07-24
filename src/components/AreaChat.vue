@@ -1,85 +1,110 @@
 <script setup lang="ts">
-import * as d3 from "d3"
-import { onMounted, watchEffect, watch, toRefs } from "vue";
-import { getStackedCoordinates, colors } from "./RandomUtils"
+import { toRefs, computed } from "vue";
+import { getRandomNumberBetween } from "./RandomUtils"
 
 const props = defineProps<{
     input: string
 }>();
 
-// init(input ?? "");
-
-onMounted(() => {
-    init(props.input ?? "");
-})
 const propsRef = toRefs(props);
 
-watch([propsRef.input], () => {
-    console.log("new props.input", propsRef.input.value)
-    init(propsRef.input.value ?? "");
+const verticalLineGap = 150;
+const verticalLines = [
+    { text: "5", x: verticalLineGap },
+    { text: "10", x: verticalLineGap * 2 },
+    { text: "15", x: verticalLineGap * 3 },
+    { text: "20", x: verticalLineGap * 4 },
+];
+const horizontalLines = [
+    { text: "50", y: 296 },
+    { text: "100", y: 236 },
+    { text: "150", y: 175 },
+    { text: "200", y: 115 },
+    { text: "250", y: 54 },
+];
+
+const dStrings = computed(() => {
+    const numberOfLines = (propsRef.input.value.length + 1) * 10;
+    const width = 700 / numberOfLines;
+    const points0 = new Array(numberOfLines).fill(0).map((_, idx) => {
+        return { x: 50 + idx * width, y: 350 }
+    });
+    points0.push({ x: 750, y: 350 })
+
+    const points1 = points0.map((p => ({ x: p.x, y: getRandomNumberBetween(300, p.y) })));
+    const dString1 = points1.reduce((pre, cur) => `${pre} L ${cur.x} ${cur.y}`, "M 50 350") + " L 750 350 Z";
+
+    const points2 = points1.map((p => ({ x: p.x, y: getRandomNumberBetween(200, p.y) })));
+    const dString2 = points2.reduce((pre, cur) => `${pre} L ${cur.x} ${cur.y}`, `M 50 ${points1[0].y}`)
+        + points1.reverse().reduce((pre, cur) => `${pre} L ${cur.x} ${cur.y}`, "")
+        + " Z";
+
+    const points3 = points2.map((p => ({ x: p.x, y: getRandomNumberBetween(100, p.y) })));
+    const dString3 = points3.reduce((pre, cur) => `${pre} L ${cur.x} ${cur.y}`, `M 50 ${points2[0].y}`)
+        + points2.reverse().reduce((pre, cur) => `${pre} L ${cur.x} ${cur.y}`, "")
+        + " Z";
+
+    const points4 = points3.map((p => ({ x: p.x, y: getRandomNumberBetween(50, p.y) })));
+    const dString4 = points4.reduce((pre, cur) => `${pre} L ${cur.x} ${cur.y}`, `M 50 ${points3[0].y}`)
+        + points3.reverse().reduce((pre, cur) => `${pre} L ${cur.x} ${cur.y}`, "")
+        + " Z";
+
+    return { dString1, dString2, dString3, dString4 }
 })
-
-function init(data: string) {
-    const id = "areaChat"
-    d3.select(`#${id}`).select('svg').remove();
-
-    const width = Math.min(document.documentElement.clientWidth, window.innerWidth || 0)
-    const height = 320;
-
-    const margin = {
-        top: 20,
-        bottom: 20,
-        left: 20,
-        right: 20
-    }
-
-    const xThreshold = 250 + ((data.length % 5) * 5);
-    const yThreshold = 250 + ((data.length % 10) * 10);
-    const numberOfLayers = 6;
-
-    let dataPoints = getStackedCoordinates(xThreshold, yThreshold, numberOfLayers);
-
-    const xScale = d3.scaleLinear()
-        .domain([0, xThreshold])
-        .range([margin.left + margin.right, width - margin.left - margin.right]);
-    const yScale = d3.scaleLinear()
-        .domain([0, yThreshold])
-        .range([height - margin.top - margin.bottom, margin.top]);
-
-    const xAxis = d3.axisBottom(xScale);
-    const yAxis = d3.axisLeft(yScale);
-
-    const area = d3.area()
-        .x(d => xScale(d[0]))
-        .y0(d => yScale(d[1]))
-        .y1(d => yScale(d[2]));
-
-    let areaChartSVG = d3.select(`#${id}`)
-        .append("svg")
-        .attr("width", width)
-        .attr("height", height);
-
-    areaChartSVG.append("g")
-        .selectAll("path")
-        .data(dataPoints)
-        .enter()
-        .append("path")
-        .datum(d => d)
-        .attr("fill", (_, i) => colors[i])
-        .attr("d", area);
-
-    areaChartSVG.append("g")
-        .attr("transform", `translate(0, ${height - margin.top - margin.bottom})`)
-        .attr("class", "axis")
-        .call(xAxis);
-    areaChartSVG.append("g")
-        .attr("transform", `translate(${margin.left + margin.right} , 0)`)
-        .attr("class", "axis")
-        .call(yAxis);
-}
 </script>
 <template>
     <div>
-        <div id="areaChat"></div>
+        <div id="areaChat">
+            <svg width="800" height="400" role="img"
+                aria-labelledby="victory-container-1-title victory-container-1-desc" viewBox="0 0 800 400"
+                style="pointer-events: all; width: 100%; height: 100%;">
+                <g role="presentation">
+                    <line x1="50" x2="750" y1="350" y2="350" role="presentation" shape-rendering="auto"
+                        vector-effect="non-scaling-stroke"
+                        style="stroke: white; fill: transparent; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;">
+                    </line>
+                    <g role="presentation" v-for="line in verticalLines">
+                        <line :x1="line.x" :x2="line.x" y1="350" y2="50" role="presentation" shape-rendering="auto"
+                            vector-effect="non-scaling-stroke"
+                            style="stroke: rgb(236, 239, 241); fill: none; stroke-dasharray: 10, 5; stroke-linecap: round; stroke-linejoin: round; pointer-events: painted;">
+                        </line>
+                        <line :x1="line.x" :x2="line.x" y1="350" y2="355" role="presentation" shape-rendering="auto"
+                            vector-effect="non-scaling-stroke"
+                            style="stroke: rgb(144, 164, 174); fill: transparent; size: 5px; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round;">
+                        </line><text :x="line.x" dx="0" y="363" dy="10.26">
+                            <tspan :x="line.x" dx="0" text-anchor="middle"
+                                style="fill: white; font-size: 12px; font-family: Roboto, &quot;Helvetica Neue&quot;, Helvetica, sans-serif; stroke: transparent; letter-spacing: normal; padding: 8px; stroke-width: 0;">
+                                {{ line.text }}</tspan>
+                        </text>
+                    </g>
+                </g>
+                <g role="presentation">
+                    <line x1="50" x2="50" y1="50" y2="350" role="presentation" shape-rendering="auto"
+                        vector-effect="non-scaling-stroke"
+                        style="stroke: white; fill: transparent; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;">
+                    </line>
+                    <g role="presentation" v-for="line in horizontalLines">
+                        <line x1="50" x2="750" :y1="line.y" :y2="line.y" role="presentation" shape-rendering="auto"
+                            vector-effect="non-scaling-stroke"
+                            style="stroke: rgb(236, 239, 241); fill: none; stroke-dasharray: 10, 5; stroke-linecap: round; stroke-linejoin: round; pointer-events: painted;">
+                        </line>
+                        <line x1="50" x2="45" :y1="line.y" :y2="line.y" role="presentation" shape-rendering="auto"
+                            vector-effect="non-scaling-stroke"
+                            style="stroke: rgb(144, 164, 174); fill: transparent; size: 5px; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round;">
+                        </line><text x="37" dx="0" :y="line.y" dy="4.26">
+                            <tspan x="37" dx="0" text-anchor="end"
+                                style="fill: white; font-size: 12px; font-family: Roboto, &quot;Helvetica Neue&quot;, Helvetica, sans-serif; stroke: transparent; letter-spacing: normal; padding: 8px; stroke-width: 0;">
+                                {{ line.text }}</tspan>
+                        </text>
+                    </g>
+                </g>
+                <g>
+                    <path :d="dStrings.dString1" fill="#b3d1ff" stroke="#0074d9" />
+                    <path :d="dStrings.dString2" fill="#00d1ff" stroke="#0074d9" />
+                    <path :d="dStrings.dString3" fill="red" stroke="#0074d9" />
+                    <path :d="dStrings.dString4" fill="blue" stroke="#0074d9" />
+                </g>
+            </svg>
+        </div>
     </div>
 </template>
